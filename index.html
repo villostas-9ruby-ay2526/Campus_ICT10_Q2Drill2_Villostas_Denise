@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://pyscript.net/releases/2026.7.3/core.css" />
+    <script type="module" src="https://pyscript.net/releases/2026.7.3/core.js"></script>
+    <title>Drill 2</title>
+    <style>
+        :root{
+            --orange:#ff6a13;
+            --orange-deep:#e04e00;
+            --orange-soft:#ffb27a;
+            --peach:#fff1e6;
+            --white:#ffffff;
+            --ink:#2b1608;
+        }
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{
+            min-height:100vh;
+            font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;
+            color:var(--ink);
+            background:linear-gradient(160deg,var(--orange) 0%,#ff8a3d 50%,var(--orange-soft) 100%);
+            display:grid;
+            place-items:center;
+            padding:24px;
+            overflow-x:hidden;
+            position:relative;
+        }
+
+        /* floating music notes */
+        .note{
+            position:fixed;bottom:-60px;color:var(--white);opacity:0;
+            font-size:2rem;pointer-events:none;
+            animation:floatUp 8s linear infinite;
+        }
+        .note:nth-of-type(1){left:6%;animation-delay:0s}
+        .note:nth-of-type(2){left:24%;animation-delay:2s;font-size:1.5rem}
+        .note:nth-of-type(3){left:46%;animation-delay:4s}
+        .note:nth-of-type(4){left:68%;animation-delay:1s;font-size:2.5rem}
+        .note:nth-of-type(5){left:88%;animation-delay:5s;font-size:1.6rem}
+
+        /* pulsing rings behind the card */
+        .ring{
+            position:fixed;top:50%;left:50%;border:2px solid rgba(255,255,255,.5);
+            border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;
+            animation:ripple 5s ease-out infinite;
+        }
+        .ring:nth-of-type(2){animation-delay:1.7s}
+        .ring:nth-of-type(3){animation-delay:3.4s}
+
+        /* card */
+        .card{
+            position:relative;z-index:2;
+            width:min(460px,100%);
+            background:var(--white);
+            border-radius:28px;
+            padding:70px 34px 36px;
+            text-align:center;
+            box-shadow:0 30px 60px rgba(120,40,0,.3);
+        }
+        .dancer{
+            position:absolute;top:-62px;left:50%;
+            width:110px;height:110px;margin-left:-55px;
+            border-radius:50%;
+            background:var(--orange);
+            border:6px solid var(--white);
+            display:grid;place-items:center;
+            box-shadow:0 10px 24px rgba(224,78,0,.4);
+        }
+        .dancer svg{width:78px;height:78px;transform-origin:50% 95%;animation:sway 2.8s ease-in-out infinite}
+        .dancer .arm-l{transform-origin:50px 36px;animation:armL 2.8s ease-in-out infinite}
+        .dancer .arm-r{transform-origin:50px 36px;animation:armR 2.8s ease-in-out infinite}
+        .dancer .skirt{transform-origin:50px 62px;animation:skirt 1.4s ease-in-out infinite}
+
+        h1{
+            font-family:Georgia,"Times New Roman",serif;
+            font-size:2rem;color:var(--orange);margin-bottom:6px;
+        }
+        .sub{font-size:.95rem;opacity:.75;margin-bottom:22px}
+        .squiggle{display:block;margin:0 auto 22px;width:110px;height:14px}
+
+        form{display:flex;flex-direction:column;gap:14px}
+        input[type="text"]{
+            width:100%;padding:15px 22px;
+            font:inherit;color:var(--ink);
+            background:var(--peach);
+            border:2px solid transparent;
+            border-radius:999px;
+            outline:none;
+            transition:border-color .25s, box-shadow .25s, background .25s, transform .25s;
+        }
+        input[type="text"]::placeholder{color:#b07a55}
+        input[type="text"]:focus{
+            background:var(--white);
+            border-color:var(--orange);
+            box-shadow:0 0 0 5px rgba(255,106,19,.18);
+            transform:translateY(-2px);
+        }
+        input[type="button"]{
+            padding:15px 22px;
+            font:inherit;font-weight:700;letter-spacing:.05em;
+            color:var(--white);background:var(--orange);
+            border:none;border-radius:999px;cursor:pointer;
+            box-shadow:0 8px 20px rgba(255,106,19,.4);
+            transition:transform .25s, background .25s, box-shadow .25s;
+        }
+        input[type="button"]:hover{
+            background:var(--orange-deep);
+            transform:translateY(-3px) rotate(-1.5deg);
+            box-shadow:0 12px 26px rgba(255,106,19,.5);
+        }
+        input[type="button"]:active{transform:translateY(0) scale(.97)}
+
+        /* result area (filled by main.py) */
+        #the_div{
+            margin-top:24px;
+            color:var(--orange-deep);
+            font-family:Georgia,"Times New Roman",serif;
+            font-size:40px;
+            font-weight:700;
+            line-height:1.15;
+            word-break:break-word;
+        }
+        #the_div:not(:empty){
+            padding:18px;
+            background:var(--peach);
+            border-radius:20px;
+            animation:pop .5s ease-out;
+        }
+
+        @keyframes sway{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg) translateY(-4px)}}
+        @keyframes armL{0%,100%{transform:rotate(-20deg)}50%{transform:rotate(16deg)}}
+        @keyframes armR{0%,100%{transform:rotate(20deg)}50%{transform:rotate(-16deg)}}
+        @keyframes skirt{0%,100%{transform:scaleX(1)}50%{transform:scaleX(1.14)}}
+        @keyframes floatUp{
+            0%{transform:translateY(0) rotate(0);opacity:0}
+            15%{opacity:.85}
+            100%{transform:translateY(-110vh) rotate(40deg);opacity:0}
+        }
+        @keyframes ripple{
+            0%{width:200px;height:200px;opacity:.9}
+            100%{width:900px;height:900px;opacity:0}
+        }
+        @keyframes pop{0%{transform:scale(.8);opacity:0}100%{transform:scale(1);opacity:1}}
+
+        @media (max-width:480px){
+            .card{padding:66px 22px 28px}
+            #the_div{font-size:30px}
+        }
+        @media (prefers-reduced-motion:reduce){
+            *,*::before,*::after{animation:none!important;transition:none!important}
+        }
+    </style>
+</head>
+<body>
+    <span class="note">♪</span><span class="note">♫</span><span class="note">♩</span><span class="note">♬</span><span class="note">♪</span>
+    <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+
+    <div class="card">
+        <div class="dancer" aria-hidden="true">
+            <svg viewBox="0 0 100 100" fill="none">
+                <g class="arm-l"><path d="M50 36 C 38 30, 30 20, 24 8" stroke="#fff" stroke-width="5" stroke-linecap="round"/></g>
+                <g class="arm-r"><path d="M50 36 C 62 30, 70 20, 76 8" stroke="#fff" stroke-width="5" stroke-linecap="round"/></g>
+                <circle cx="50" cy="24" r="8" fill="#fff"/>
+                <path d="M50 32 C 46 44, 46 54, 50 62 C 54 54, 54 44, 50 32Z" fill="#fff"/>
+                <g class="skirt"><path d="M50 58 C 34 62, 24 78, 20 84 C 38 92, 62 92, 80 84 C 76 78, 66 62, 50 58Z" fill="#fff"/></g>
+                <path d="M45 86 L42 98" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+                <path d="M55 86 C 60 92, 68 94, 74 90" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+            </svg>
+        </div>
+
+        <h1>Find Your Name</h1>
+        <p class="sub">Enter your name and step into the spotlight.</p>
+        <svg class="squiggle" viewBox="0 0 120 14" fill="none" stroke="#ff6a13" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M2 7 Q 12 -2 22 7 T 42 7 T 62 7 T 82 7 T 102 7 T 118 7"/></svg>
+
+        <form>
+            <input type="text" id="namef" placeholder="Input your first name"><br>
+            <input type="text" id="namel" placeholder="Input your last name"><br>
+            <input type="button" py-click="grab_name" value="Search">
+        </form>
+        <div id="the_div"></div>
+    </div>
+
+    <py-script src="main.py"></py-script>
+</body>
+</html>
